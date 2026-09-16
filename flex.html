@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1020">
+<title>FLEX — Project Next</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#080d18;--panel:#101827;--panel2:#151f31;--line:#263249;--text:#f4f7fb;--muted:#9eabc0;--accent:#6d7cff;--accent2:#4de0c1;--danger:#ff6b7a;--shadow:0 18px 50px #0007}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#080d18,#0b1220);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;min-height:100vh}
+button,input,textarea,select{font:inherit}button{cursor:pointer;border:0} .app{min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:64px;background:#0c1321ee;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 18px;gap:14px;position:sticky;top:0;z-index:20;backdrop-filter:blur(18px)}
+.logo{font-weight:900;font-size:20px;letter-spacing:.5px}.logo span{color:var(--accent2)}
+.status{font-size:12px;color:var(--muted);margin-left:auto}.avatar{width:38px;height:38px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;font-weight:800}
+.layout{display:grid;grid-template-columns:250px 1fr;min-height:calc(100vh - 64px)}
+.sidebar{border-right:1px solid var(--line);padding:16px 12px;background:#0a111e;position:sticky;top:64px;height:calc(100vh - 64px)}
+.navbtn{width:100%;padding:12px 14px;border-radius:12px;background:transparent;color:var(--muted);text-align:left;margin:3px 0}.navbtn:hover,.navbtn.active{background:var(--panel2);color:var(--text)}
+.main{padding:22px;max-width:1300px;width:100%;margin:auto}.page{display:none}.page.active{display:block}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:24px;border:1px solid var(--line);background:linear-gradient(135deg,#121d31,#101827);border-radius:22px;box-shadow:var(--shadow)}
+h1,h2,h3{margin-top:0}.muted{color:var(--muted)}.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px}.card.click{cursor:pointer}.card.click:hover{border-color:#526083}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.primary,.secondary,.ghost,.dangerBtn{padding:10px 14px;border-radius:11px;font-weight:700}.primary{background:var(--accent);color:white}.secondary{background:#202c43;color:var(--text);border:1px solid var(--line)}.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}.dangerBtn{background:#321923;color:#ff9aa5;border:1px solid #63313d}
+.search,.field input,.field textarea,.field select{width:100%;background:#0b1321;border:1px solid var(--line);color:var(--text);padding:11px 12px;border-radius:11px;outline:none}.field textarea{min-height:100px;resize:vertical}.field{display:grid;gap:7px;margin-bottom:12px}.field label{font-size:13px;color:var(--muted)}
+.list{display:grid;gap:9px}.row{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);background:#0d1524;border-radius:14px}.row .grow{flex:1}.small{font-size:12px}.pill{display:inline-block;padding:5px 9px;border-radius:999px;background:#17233a;color:#b9c5dd;font-size:12px}
+.chatLayout{display:grid;grid-template-columns:320px 1fr;gap:14px;height:calc(100vh - 140px);min-height:560px}.chatBox{min-width:0}.messages{min-height:0}.chatList,.chatBox{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden}.chatList{display:flex;flex-direction:column}.chatListHead,.chatHead{padding:14px;border-bottom:1px solid var(--line)}.conversation{padding:12px 14px;border-bottom:1px solid #1d2738;display:flex;gap:10px;cursor:pointer}.conversation:hover,.conversation.active{background:#172238}.messages{padding:16px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:9px}.chatBox{display:flex;flex-direction:column}.bubble{max-width:84%;padding:12px 14px;border-radius:16px;line-height:1.55;font-size:15px;word-break:break-word;overflow-wrap:anywhere}.bubble img{max-width:min(320px,78vw);height:auto}.bubble video{max-width:min(360px,78vw);max-height:320px}.bubble audio{width:min(320px,78vw)}.mine{align-self:flex-end;background:#3b49a8}.theirs{align-self:flex-start;background:#1b273a}.composer{padding:12px;border-top:1px solid var(--line);display:flex;gap:8px}.composer input{flex:1}
+.presence-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#64748b;margin-right:5px}
+.presence-dot.online{background:#22c55e}
+.typing{min-height:20px;padding:0 16px 5px;font-size:12px;color:#94a3b8}
+.callScreen{position:fixed;inset:0;background:#050914f2;z-index:50;display:none;align-items:center;justify-content:center;padding:20px}.callScreen.show{display:flex}.callCard{width:min(850px,100%);background:#0e1727;border:1px solid var(--line);border-radius:22px;padding:18px;text-align:center}.videos{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.videos video{width:100%;background:#000;border-radius:16px;max-height:55vh;object-fit:cover}.onlyAudio{display:grid;place-items:center;height:300px;background:#090e19;border-radius:16px;font-size:64px}
+.toast{position:fixed;right:18px;bottom:18px;background:#182238;border:1px solid var(--line);padding:12px 15px;border-radius:12px;z-index:100;display:none}.toast.show{display:block}
+.mobileMenu{display:none}.empty{padding:30px;text-align:center;color:var(--muted)}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;height:68px;z-index:30;border-right:0;border-top:1px solid var(--line);padding:6px 4px;display:flex;justify-content:flex-start;align-items:stretch;gap:4px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin;touch-action:pan-x}.navbtn{width:auto;min-width:72px;flex:0 0 auto;margin:0;padding:7px 9px;font-size:11px;text-align:center}.navbtn span{display:block;font-size:18px;line-height:20px}.main{padding:14px 12px 86px}.g2,.g3,.chatLayout{grid-template-columns:1fr}.chatLayout{height:auto;min-height:0}.chatList{max-height:300px}.chatBox{height:65vh}.status{display:none}.hero{flex-direction:column;align-items:flex-start}.videos{grid-template-columns:1fr}}
+</style>
+<style>
+.flex-search{display:flex;gap:8px;margin:10px 0}
+.flex-search input{flex:1;padding:11px 13px;border:1px solid #334155;border-radius:12px;background:#0f172a;color:#fff}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:#1e293b;overflow:hidden;flex:0 0 42px;font-weight:700}
+.avatar img{width:100%;height:100%;object-fit:cover}.profile-avatar{width:96px;height:96px;border-radius:50%;overflow:hidden;background:#1e293b;display:grid;place-items:center;font-size:32px;font-weight:800;border:2px solid var(--line)}.profile-avatar img{width:100%;height:100%;object-fit:cover}.avatar-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.conv-meta{min-width:0;flex:1}.conv-name{display:flex;justify-content:space-between;gap:8px}
+.preview{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#94a3b8;font-size:13px;margin-top:3px}
+.unread-badge{min-width:20px;height:20px;padding:0 6px;border-radius:10px;display:inline-grid;place-items:center;background:#22c55e;color:#052e16;font-size:11px;font-weight:800}
+.member-row{display:flex;align-items:center;gap:10px}
+</style>
+<style>
+.socialNav{display:flex;gap:6px;overflow-x:auto;padding:8px 0;margin-bottom:12px;scrollbar-width:thin}.socialNav button{white-space:nowrap}
+.post{padding:16px;margin-bottom:12px}.postHead{display:flex;gap:10px;align-items:center}.postBody{white-space:pre-wrap;line-height:1.5;margin:12px 0}.postActions{display:flex;gap:7px;flex-wrap:wrap}.postActions button{background:transparent;border:1px solid var(--line);color:var(--text);border-radius:10px;padding:7px 10px}.comment{padding:8px 10px;border-radius:10px;background:#111a2a;margin-top:6px}.groupRow{display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--line);cursor:pointer}.groupRow:hover{background:#172238}.groupChat{display:flex;flex-direction:column;height:65vh}.groupMsgs{flex:1;overflow:auto;padding:12px}.discoverGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.metric{font-size:24px;font-weight:800}.recording{background:#7f1d1d!important}
+</style>
+<style>
+/* FLEX premium notifications + statuses */
+.notifyHero{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:14px;padding:20px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(135deg,#121d31,#0f1726);box-shadow:var(--shadow)}
+.notifyTitle{display:flex;align-items:center;gap:12px}.notifyLogo{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:#1b2740;border:1px solid #34425f;font-size:24px}.notifyCount{min-width:26px;height:26px;padding:0 8px;border-radius:999px;display:inline-grid;place-items:center;background:#ef4444;color:#fff;font-size:12px;font-weight:900}
+.notifyCard{display:flex;align-items:center;gap:13px;padding:14px;border:1px solid var(--line);background:linear-gradient(135deg,#0f1828,#0d1524);border-radius:16px;margin-bottom:10px}.notifyIcon{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#17243a;font-size:21px;flex:0 0 44px}.notifyText{flex:1;min-width:0}.notifyActions{display:flex;gap:7px;flex-wrap:wrap}.notifyTime{font-size:11px;color:#7f8da5;margin-top:3px}.notifyEmpty{padding:42px 20px;text-align:center;border:1px dashed #334155;border-radius:18px;background:#0d1524}.notifyEmptyIcon{font-size:42px;margin-bottom:8px}.statusComposer{border:1px solid var(--line);background:linear-gradient(135deg,#101a2b,#0d1524);border-radius:20px;padding:16px;margin:14px 0}.statusMediaRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}.statusMediaBtn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:#18243a;border:1px solid var(--line);color:var(--text);font-weight:700}.statusPreview{display:none;margin-top:12px;border:1px solid var(--line);border-radius:16px;padding:10px;background:#09111f}.statusPreview img,.statusPreview video{max-width:100%;max-height:320px;border-radius:12px;display:block;margin:auto}.statusMediaName{font-size:12px;color:var(--muted)}.statusCardMedia img,.statusCardMedia video{width:100%;max-height:420px;object-fit:cover;border-radius:14px;margin-top:10px}.statusGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}.statusCard{overflow:hidden}.statusCaption{white-space:pre-wrap;line-height:1.5;margin-top:12px}.navBadge{float:right;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;display:inline-grid;place-items:center;font-weight:900}
+@media(max-width:600px){.notifyHero{align-items:flex-start;flex-direction:column}.notifyCard{align-items:flex-start}.notifyActions{width:100%}.notifyActions button{flex:1}.statusGrid{grid-template-columns:1fr}}
+</style>
+
+<style>
+/* FLEX polished social navigation + calls + story circles */
+.socialNav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:8px 0 14px;margin-bottom:8px;overflow:visible}
+.socialTopBtn{min-width:0!important;width:100%;display:flex!important;flex-direction:column!important;align-items:center;justify-content:center;gap:6px;padding:8px 4px!important;border:1px solid transparent!important;border-radius:16px!important;background:transparent!important;color:var(--muted)!important;font-size:12px!important;font-weight:700!important;line-height:1.1!important}
+.socialTopBtn:hover{background:#111b2c!important;color:var(--text)!important;border-color:var(--line)!important}.socialTopBtn.active{background:#121e31!important;color:var(--text)!important;border-color:#2b3953!important;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.socialIcon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:#111c2d;border:1px solid #2a3851;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+.socialIcon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.socialIconFeed{color:#d9e3f5}.socialIconDiscover{color:#8db7ff}.socialIconGroups{color:#c7b7ff}.socialIconStatus{border-radius:50%;border:3px solid #22c55e;background:#0b1522;position:relative;box-shadow:0 0 0 3px rgba(34,197,94,.10),0 0 18px rgba(34,197,94,.16)}
+.statusDotInner{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#86efac 0 12%,#22c55e 30%,#15803d 72%,#0b4d2a 100%);box-shadow:0 0 0 2px #0b1522}
+.callPageHead{display:flex;align-items:center;gap:14px;margin:8px 0 18px}.callPageHead h2{font-size:30px;margin:5px 0 2px}.callPageIcon{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(145deg,#16253d,#0f1727);border:1px solid #30415f;box-shadow:var(--shadow)}.callPageIcon svg,.callModeIcon svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.callPageIcon{color:#9fc1ff}
+.callModeGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.callModeCard{position:relative;display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start;padding:20px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#111c2e,#0c1422);box-shadow:var(--shadow);min-height:170px}.callModeCard h3{margin:3px 0 5px;font-size:20px}.callModeIcon{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:#18243a;border:1px solid #33445f}.audioMode .callModeIcon{color:#8db7ff}.videoMode .callModeIcon{color:#a9e7d5}.callChooseBtn{grid-column:1/-1;justify-self:stretch;margin-top:4px}
+.callFriendsPanel{margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:22px;background:#0e1726;box-shadow:var(--shadow)}.callFriendsHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.callFriendsHead h3{margin:0 0 4px}.callSecure{font-size:11px;font-weight:800;padding:7px 10px;border-radius:999px;background:#102a21;color:#7ee2b5;border:1px solid #1f6248}.callFriendsList .row{padding:12px;border:1px solid #24334b;border-radius:16px;background:#101a2a;margin-top:9px}.callFriendsList .row button{min-width:44px;height:40px;border-radius:12px}
+.statusStoriesShell{padding:15px 14px 13px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#101a2b,#0d1524);box-shadow:var(--shadow);margin:14px 0}.statusStoriesHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}.statusStoriesHead h3{margin:0 0 3px}.statusStories{display:flex;gap:15px;overflow-x:auto;padding:3px 2px 7px;scrollbar-width:thin}.statusStory{width:72px;min-width:72px;text-align:center;cursor:pointer}.statusStoryCircle{width:66px;height:66px;margin:0 auto 7px;border-radius:50%;padding:3px;background:linear-gradient(135deg,#22c55e,#86efac,#16a34a);box-shadow:0 0 0 2px rgba(34,197,94,.12),0 6px 20px rgba(34,197,94,.12)}.statusStoryInner{width:100%;height:100%;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#111c2d;border:2px solid #0a1120;color:#dbeafe;font-weight:800;font-size:12px;line-height:1.15}.statusStoryInner img,.statusStoryInner video{width:100%;height:100%;object-fit:cover}.statusStoryText{max-width:72px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;font-weight:700;color:var(--text)}.statusStoryMe .statusStoryCircle{background:linear-gradient(135deg,#4ade80,#16a34a)}.statusStoryAdd{position:relative}.statusStoryAdd .statusStoryInner{font-size:25px;color:#8df0bd}.statusStoryEmpty{padding:14px 0;color:var(--muted);font-size:13px}
+.statusViewer{position:fixed;inset:0;background:rgba(2,6,14,.94);z-index:90;display:none;align-items:center;justify-content:center;padding:20px}.statusViewer.show{display:flex}.statusViewerCard{width:min(520px,100%);max-height:92vh;overflow:auto;border:1px solid #33445f;border-radius:24px;background:#0d1625;box-shadow:0 25px 80px rgba(0,0,0,.5);padding:16px}.statusViewerHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.statusViewerMedia img,.statusViewerMedia video{width:100%;max-height:62vh;object-fit:contain;border-radius:18px;background:#050a12;margin-top:12px}.statusViewerCaption{white-space:pre-wrap;line-height:1.55;margin-top:12px;padding:12px;border-radius:14px;background:#111d2e}
+@media(max-width:650px){.callModeGrid{grid-template-columns:1fr}.callModeCard{min-height:0}.callPageHead h2{font-size:27px}.statusStoriesHead{align-items:flex-start}.statusRefreshBtn{padding:8px 10px}.socialIcon{width:40px;height:40px}.socialNav{gap:5px}}
+</style>
+<style>.careerVideoGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:15px}.careerVideoCard,.careerAppCard,.skillIntel{background:linear-gradient(145deg,rgba(12,33,64,.9),rgba(5,15,31,.96));border:1px solid rgba(62,167,255,.2);border-radius:18px;padding:16px}.careerVideoCard h3{min-height:48px}.videoBadge{font-size:11px;letter-spacing:1px;color:#75bfff;margin-bottom:8px}.careerVideoCard a{display:inline-block;margin-top:8px;text-decoration:none}.careerAppCard{display:flex;justify-content:space-between;gap:15px;align-items:center;margin:10px 0}.careerPlanSteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:15px}.skillIntel h4{margin-bottom:5px}@media(max-width:900px){.careerVideoGrid,.careerPlanSteps{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.careerVideoGrid,.careerPlanSteps{grid-template-columns:1fr}.careerAppCard{display:block}}@media print{body *{visibility:hidden!important}.pnModal,.pnModal *{visibility:visible!important}.pnModal{position:absolute!important;inset:0!important;background:#fff!important;color:#111!important}.pnModalContent{max-height:none!important}}</style></head>
+<body>
+<div class="app">
+<header class="topbar">
+  <button class="ghost" onclick="backToProjectNext()">← Project Next</button>
+  <div class="logo">🌐 <span>FLEX</span></div>
+  <div id="topStatus" class="status">Connexion…</div>
+  <div id="topAvatar" class="avatar">?</div>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+  <button class="navbtn active" data-page="home" onclick="showPage('home')"><span>🏠</span>Accueil</button>
+  <button class="navbtn" data-page="chats" onclick="showPage('chats')"><span>💬</span>Messages</button>
+  <button class="navbtn" data-page="friends" onclick="showPage('friends')"><span>👥</span>Contacts</button>
+  <button class="navbtn" data-page="calls" onclick="showPage('calls')"><span>📞</span>Appels</button>
+  <button class="navbtn" data-page="notifications" onclick="showPage('notifications')"><span>🔔</span>Notifications <span id="notificationNavBadge" class="navBadge" style="display:none">0</span></button>
+  <button class="navbtn" data-page="status" onclick="showPage('status')"><span>🟢</span>Statuts</button>
+  <button class="navbtn" data-page="profile" onclick="showPage('profile')"><span>👤</span>Profil</button>
+  <button class="navbtn" data-page="settings" onclick="showPage('settings')"><span>⚙️</span>Paramètres</button>
+</aside>
+
+<main class="main"><div class="socialNav" aria-label="Navigation sociale FLEX">
+  <button class="navbtn socialTopBtn" data-page="feed" onclick="showPage('feed')"><span class="socialIcon socialIconFeed"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12A1.5 1.5 0 0 1 19.5 5v14A1.5 1.5 0 0 1 18 20.5H6A1.5 1.5 0 0 1 4.5 19V5A1.5 1.5 0 0 1 6 3.5Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span><span>Fil</span></button>
+  <button class="navbtn socialTopBtn" data-page="discover" onclick="showPage('discover')"><span class="socialIcon socialIconDiscover"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.2 4.2M11 8v6M8 11h6"/></svg></span><span>Découvrir</span></button>
+  <button class="navbtn socialTopBtn" data-page="groups" onclick="showPage('groups')"><span class="socialIcon socialIconGroups"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.8 19c.6-3.1 2.4-4.8 5.2-4.8s4.6 1.7 5.2 4.8M14 14.8c2.9-.2 5.2 1.1 6 4.2"/></svg></span><span>Groupes</span></button>
+  <button class="navbtn socialTopBtn" data-page="status" onclick="showPage('status')"><span class="socialIcon socialIconStatus"><span class="statusDotInner"></span></span><span>Statuts</span></button>
+</div>
+<section id="home" class="page active">
+  <div class="hero">
+    <div><span class="pill">PROJECT NEXT · FLEX</span><h1>Connect. Exchange. Grow.</h1><p class="muted">Ton espace social indépendant, attaché à Project Next : messages privés, amis, appels audio/vidéo et notifications.</p></div>
+    <button class="primary" onclick="showPage('chats')">💬 Mes messages</button>
+  </div>
+  <div class="grid g3" style="margin-top:16px">
+    <div class="card click" onclick="showPage('chats')"><h3>💬 Messages</h3><p class="muted">Conversations privées en temps réel.</p><b id="statChats">0</b></div>
+    <div class="card click" onclick="showPage('friends')"><h3>👥 Contacts</h3><p class="muted">Trouve les membres FLEX et gère tes amis.</p><b id="statFriends">0</b></div>
+    <div class="card click" onclick="showPage('calls')"><h3>📞 Appels</h3><p class="muted">Audio et vidéo entre amis acceptés.</p><b>Audio · Vidéo</b></div>
+  </div>
+  <div id="homeAuth" class="card" style="margin-top:16px"></div>
+</section>
+
+<section id="chats" class="page">
+  <h2>💬 Messages</h2>
+  <div class="chatLayout">
+    <div class="chatList">
+      <div class="chatListHead"><input id="chatSearch" class="search" placeholder="Rechercher un contact…" oninput="renderConversations()"></div>
+      <div class="flex-search"><input id="flexConversationSearch" placeholder="🔎 Rechercher une conversation..." oninput="filterFlexConversations(this.value)"></div><div id="conversationList" style="overflow:auto"></div>
+    </div>
+    <div class="chatBox">
+      <div id="chatHead" class="chatHead"><b>Sélectionne une conversation</b></div>
+      <div id="messages" class="messages"><div class="empty">Tes messages privés apparaîtront ici.</div></div>
+      <div id="replyBar" class="card" style="display:none;padding:8px;margin-bottom:6px"></div><div class="composer"><button class="secondary" onclick="toggleEmoji()">😊</button><button class="secondary" onclick="document.getElementById('messageFile').click()">📎</button><button class="secondary" onclick="startVoiceMessage()">🎙️</button><input id="messageFile" type="file" accept="image/*,video/*,audio/*,.pdf" style="display:none" onchange="sendAttachment(this)"><input id="messageInput" placeholder="Écrire un message…" oninput="sendTyping()" onkeydown="if(event.key==='Enter')sendMessage()"><button class="primary" onclick="sendMessage()">Envoyer</button></div><div id="emojiBar" class="card" style="display:none;padding:8px">😀 😂 ❤️ 👍 🙏 🔥 🎉 😍 😢 😮 👏 💯</div>
+    </div>
+  </div>
+</section>
+
+<section id="friends" class="page">
+  <h2>👥 Contacts & membres</h2>
+  <div class="card">
+    <div class="grid g2"><input id="memberSearch" class="search" placeholder="Nom, pays, domaine…" oninput="renderMembers()"><select id="memberFilter" class="search" onchange="renderMembers()"><option value="all">Tous</option><option value="friends">Mes amis</option><option value="pending">Invitations</option></select></div>
+  </div>
+  <div id="members" class="grid g2" style="margin-top:14px"></div>
+</section>
+
+
+<section id="feed" class="page"><div class="hero"><div><span class="pill">FLEX SOCIAL</span><h2>📰 Fil d’actualité</h2><p class="muted">Publie, réagis, commente et partage avec la communauté FLEX.</p></div><button class="primary" onclick="openPostComposer()">✍️ Publier</button></div><div id="postComposer" class="card" style="display:none;margin:14px 0"><textarea id="postBody" class="field" style="width:100%;min-height:120px" placeholder="Quoi de neuf ?"></textarea><div class="actions"><button class="primary" onclick="createPost()">Publier</button><button class="secondary" onclick="closePostComposer()">Annuler</button></div></div><div class="card" style="margin-bottom:14px"><input id="feedSearch" class="search" placeholder="🔎 Rechercher dans les publications…" oninput="renderFeed()"></div><div id="feedList"></div></section>
+<section id="discover" class="page"><h2>🌍 Découvrir</h2><div class="card"><input id="globalSearch" class="search" placeholder="Rechercher une personne, un groupe…" oninput="renderDiscover()"></div><div id="discoverList" class="discoverGrid" style="margin-top:14px"></div></section>
+<section id="groups" class="page"><div class="hero"><div><h2>👥 Groupes FLEX</h2><p class="muted">Crée des communautés d’étude, de travail, d’amitié ou de projets.</p></div><button class="primary" onclick="createGroupPrompt()">＋ Créer un groupe</button></div><div class="grid g2"><div class="card"><h3>Mes groupes</h3><div id="myGroups"></div></div><div class="card"><h3>Communautés</h3><div id="allGroups"></div></div></div><div id="groupChatPanel" class="card" style="display:none;margin-top:14px"><div id="groupChatHead"></div><div id="groupMessages" class="groupMsgs"></div><div class="composer"><input id="groupMessageInput" placeholder="Écrire dans le groupe…" onkeydown="if(event.key==='Enter')sendGroupMessage()"><button class="primary" onclick="sendGroupMessage()">Envoyer</button></div></div></section>
+<section id="calls" class="page">
+  <div class="callPageHead">
+    <div class="callPageIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 3.8 5.2 5.4c-.8.6-1.1 1.7-.7 2.6 2.2 5.2 6.3 9.3 11.5 11.5.9.4 2 0 2.6-.7l1.6-2.2c.6-.8.5-1.9-.2-2.6l-2.1-2.1c-.6-.6-1.6-.8-2.3-.3l-1.7 1.1a13.2 13.2 0 0 1-4.2-4.2l1.1-1.7c.5-.7.4-1.7-.3-2.3L10 4c-.7-.7-1.8-.8-2.6-.2Z"/></svg></div>
+    <div><span class="pill">FLEX COMMUNICATION</span><h2>Appels</h2><p class="muted">Des appels audio et vidéo simples, propres et réservés à tes amis FLEX.</p></div>
+  </div>
+  <div class="callModeGrid">
+    <div class="callModeCard audioMode">
+      <div class="callModeIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.4 3.8 5.2 5.4c-.8.6-1.1 1.7-.7 2.6 2.2 5.2 6.3 9.3 11.5 11.5.9.4 2 0 2.6-.7l1.6-2.2c.6-.8.5-1.9-.2-2.6l-2.1-2.1c-.6-.6-1.6-.8-2.3-.3l-1.7 1.1a13.2 13.2 0 0 1-4.2-4.2l1.1-1.7c.5-.7.4-1.7-.3-2.3L10 4c-.7-.7-1.8-.8-2.6-.2Z"/></svg></div>
+      <div><h3>Appel audio</h3><p class="muted">Parle avec ton ami avec une qualité audio claire.</p></div>
+      <button class="secondary callChooseBtn" onclick="document.getElementById('callFriends')?.scrollIntoView({behavior:'smooth',block:'center'})"><span>📞</span> Choisir un ami</button>
+    </div>
+    <div class="callModeCard videoMode">
+      <div class="callModeIcon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="12" height="12" rx="2.5"/><path d="m15 10 5-3v10l-5-3z"/></svg></div>
+      <div><h3>Appel vidéo</h3><p class="muted">Caméra + microphone pour une vraie conversation face à face.</p></div>
+      <button class="primary callChooseBtn" onclick="document.getElementById('callFriends')?.scrollIntoView({behavior:'smooth',block:'center'})"><span>🎥</span> Choisir un ami</button>
+    </div>
+  </div>
+  <div class="callFriendsPanel">
+    <div class="callFriendsHead"><div><h3>👥 Tes amis disponibles</h3><p class="muted">Choisis un ami accepté puis lance directement l'audio ou la vidéo.</p></div><span class="callSecure">🔒 Privé</span></div>
+    <div id="callFriends" class="callFriendsList"></div>
+    <div class="card" style="margin-top:14px"><div class="row" style="justify-content:space-between"><div><h3>🕘 Historique des appels</h3><p class="muted">Historique conservé sur cet appareil.</p></div><button class="ghost" onclick="clearFlexCallHistory()">Effacer</button></div><div id="flexCallHistory" class="small"></div></div>
+  </div>
+</section>
+
+<section id="status" class="page">
+  <div class="hero"><div><span class="pill">FLEX STATUS</span><h2>🟢 Statuts</h2><p class="muted">Partage du texte, des photos ou des vidéos. Les statuts restent visibles 24 heures.</p></div><button class="primary" onclick="document.getElementById('statusBody').focus()">＋ Mon statut</button></div>
+  <div class="statusStoriesShell">
+    <div class="statusStoriesHead"><div><h3>Statuts récents</h3><span class="muted small">Appuie sur un cercle pour ouvrir le statut.</span></div><button class="ghost statusRefreshBtn" onclick="loadStatuses()">↻ Actualiser</button></div>
+    <div id="statusStories" class="statusStories"></div>
+  </div>
+  <div class="statusComposer">
+    <div class="field"><label>✍️ Ton statut</label><textarea id="statusBody" placeholder="Quoi de neuf ?" style="min-height:90px"></textarea></div>
+    <div class="statusMediaRow">
+      <label class="statusMediaBtn">📷 Photo / 🎥 Vidéo<input id="statusMedia" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" style="display:none" onchange="previewStatusMedia(this)"></label>
+      <span id="statusMediaName" class="statusMediaName">Aucun média sélectionné</span>
+      <button class="secondary" type="button" onclick="clearStatusMedia()">✕ Retirer</button>
+    </div>
+    <div id="statusPreview" class="statusPreview"></div>
+    <div class="actions" style="margin-top:12px"><button class="primary" onclick="createStatus()">🟢 Publier le statut</button><button class="secondary" onclick="loadStatuses()">↻ Actualiser</button></div>
+  </div>
+  <div id="statusList" class="statusGrid"></div>
+</section>
+
+<section id="notifications" class="page">
+  <div class="notifyHero">
+    <div class="notifyTitle"><div class="notifyLogo">🔔</div><div><span class="pill">FLEX · ALERTES</span><h2 style="margin:5px 0 2px">Notifications</h2><p class="muted" style="margin:0">Retrouve ici tes invitations et les activités importantes.</p></div></div>
+    <div id="notificationCount" class="notifyCount" style="display:none">0</div>
+  </div>
+  <div id="notificationsList"></div>
+</section>
+
+<section id="profile" class="page">
+  <h2>👤 Mon profil</h2>
+  <div id="profileBox"></div>
+</section>
+
+<section id="settings" class="page">
+  <h2>⚙️ Paramètres FLEX</h2>
+  <div class="grid g2">
+    <div class="card"><h3>🔐 Compte</h3><p class="muted">Gère ta session et tes informations publiques.</p><button class="secondary" onclick="showPage('profile')">Modifier mon profil</button></div>
+    <div class="card"><h3>🔔 Notifications</h3><label><input type="checkbox" id="notifyToggle" checked> Notifications FLEX activées</label></div>
+    <div class="card"><h3>🛡️ Confidentialité</h3><p class="muted">La messagerie et les appels sont réservés aux connexions acceptées.</p></div>
+    <div class="card"><h3>🌐 Réseaux</h3><p class="muted">Tu peux inviter des personnes via le partage de ton navigateur.</p><button class="secondary" onclick="shareFlex()">🔗 Inviter un ami</button></div>
+  </div>
+  <div class="card" style="margin-top:14px"><button class="dangerBtn" onclick="signOut()">Déconnexion</button></div>
+</section>
+</main>
+</div>
+</div>
+
+<div id="authOverlay" class="callScreen">
+<div class="callCard" style="max-width:520px;text-align:left">
+<h2>🌐 Rejoindre FLEX</h2><p class="muted">Crée ton compte ou connecte-toi à ton compte FLEX.</p>
+<div class="field"><label>Email</label><input id="authEmail" type="email" autocomplete="email"></div>
+<div class="field"><label>Mot de passe</label><input id="authPassword" type="password" autocomplete="current-password"></div>
+<div id="signupFields">
+<div class="field"><label>Nom affiché</label><input id="authName"></div>
+<div class="grid g2"><div class="field"><label>Pays</label><input id="authCountry" value="Côte d'Ivoire"></div><div class="field"><label>Domaine</label><input id="authDomain" placeholder="Informatique, finance…"></div></div>
+</div>
+<div class="actions"><button class="primary" onclick="signUp()">Créer mon compte</button><button class="secondary" onclick="signIn()">Se connecter</button><button class="ghost" onclick="resetFlexPassword()">Mot de passe oublié</button><button class="ghost" onclick="closeAuth()">Annuler</button></div>
+<div id="authMsg" class="muted" style="margin-top:12px"></div>
+</div>
+</div>
+
+<div id="callOverlay" class="callScreen">
+<div class="callCard">
+<div id="callTitle"></div>
+<div id="callVideos" class="videos" style="margin-top:12px"><div id="localWrap"><video id="localVideo" autoplay muted playsinline></video><div class="small muted">Toi</div></div><div id="remoteWrap"><video id="remoteVideo" autoplay playsinline></video></div></div><audio id="remoteAudio" autoplay></audio><div id="callControls" class="actions" style="justify-content:center;margin-top:14px"><button class="secondary" onclick="toggleCallMute()">🎙️ Muet</button><button class="secondary" onclick="toggleCallCamera()">📷 Caméra</button><button class="dangerBtn" onclick="endCall(true)">☎️ Raccrocher</button></div>
+<div id="audioOnly" class="onlyAudio" style="display:none">📞</div>
+<div class="actions" style="justify-content:center;margin-top:14px"><button class="dangerBtn" onclick="endCall(true)">🔴 Raccrocher</button></div>
+</div>
+</div>
+<div id="statusViewer" class="statusViewer" onclick="if(event.target===this)closeStatusStory()"><div id="statusViewerContent"></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+const SUPABASE_URL='https://jlyyoitjjpsaqekmuyxh.supabase.co';
+const SUPABASE_KEY='sb_publishable_5W-KCTh_WXvWnbTGl0ZTLg_7PUvWLhM';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+let user=null,profiles=[],relations=[],conversations=[],activeConversation=null,realtime=null,userChannel=null,presenceChannel=null,typingTimer=null,unreadCounts={},profileCache={};
+let callPC=null,localStream=null,callOther=null,callType='audio',pendingOffer=null;
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function toast(t){let e=document.getElementById('toast');e.textContent=t;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),3200)}
+function showPage(id){if(id==='calls')setTimeout(renderCallFriends,0);document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id)?.classList.add('active');document.querySelectorAll('.navbtn').forEach(x=>x.classList.toggle('active',x.dataset.page===id));if(id==='chats')renderConversations();if(id==='friends')renderMembers();if(id==='profile')renderProfile();if(id==='notifications')renderNotifications();if(id==='feed')renderFeed();if(id==='discover')renderDiscover();if(id==='groups')renderGroups();if(id==='status')loadStatuses()}
+function backToProjectNext(){try{if(window.parent&&window.parent!==window){window.parent.postMessage({type:'flex-back-to-project-next'},'*');return;}}catch(e){}location.href='https://diohfranckalex1-oss.github.io/PROJECT-NEXT/';}
+function openAuth(){document.getElementById('authOverlay').classList.add('show')}
+function closeAuth(){document.getElementById('authOverlay').classList.remove('show')}
+function msg(t){document.getElementById('authMsg').textContent=t}
+
+async function ensureProfile(u){
+ if(!u)return;
+ const {data}=await sb.from('profiles').select('id').eq('id',u.id).maybeSingle();
+ if(data)return;
+ const m=u.user_metadata||{},base=(u.email||'membre').split('@')[0].replace(/[^a-zA-Z0-9_]/g,'_');
+ await sb.from('profiles').insert({id:u.id,username:base+'_'+u.id.slice(0,6),display_name:m.display_name||'Membre FLEX',country:m.country||'International',domain:m.domain||'À définir',bio:'Membre FLEX — Connect. Exchange. Grow.'});
+}
+async function signUp(){
+ const email=authEmail.value.trim(),password=authPassword.value,name=authName.value.trim(),country=authCountry.value.trim(),domain=authDomain.value.trim();
+ if(!email||!password||!name)return msg('Remplis email, mot de passe et nom affiché.');
+ if(password.length<6)return msg('Le mot de passe doit contenir au moins 6 caractères.');
+ try{msg('Création du compte…');const {data,error}=await sb.auth.signUp({email,password,options:{data:{display_name:name,country:country||'International',domain:domain||'À définir'},emailRedirectTo:location.href}});if(error)throw error;if(data.session){await ensureProfile(data.user);closeAuth();await refresh();toast('Bienvenue sur FLEX !')}else msg('Compte créé. Confirme ton email puis connecte-toi.')}catch(e){msg('❌ '+(e.message||'Erreur'))}
+}
+async function resetFlexPassword(){
+ const email=authEmail.value.trim();
+ if(!email)return msg('Indique ton email pour recevoir le lien de réinitialisation.');
+ try{msg('Envoi du lien…');const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.href});if(error)throw error;msg('✅ Vérifie ta boîte email pour réinitialiser ton mot de passe.')}catch(e){msg('❌ '+(e.message||'Impossible d’envoyer le lien.'))}
+}
+async function signIn(){
+ const email=authEmail.value.trim(),password=authPassword.value;
+ if(!email||!password)return msg('Indique ton email et ton mot de passe.');
+ try{msg('Connexion…');const {data,error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;await ensureProfile(data.user);closeAuth();await refresh();toast('Connexion réussie.')}catch(e){msg('❌ '+(e.message||'Erreur'))}
+}
+async function signOut(){await sb.auth.signOut();location.reload()}
+
+function rel(id){const r=relations.find(x=>x.requester_id===id||x.addressee_id===id);if(!r)return'none';if(r.status==='accepted')return'friend';return r.requester_id===user?.id?'sent':'received'}
+function isFriend(id){return relations.some(x=>x.status==='accepted'&&(x.requester_id===id||x.addressee_id===id))}
+async function connect(id){if(!user)return openAuth();if(rel(id)!=='none')return toast('Une relation existe déjà.');const {error}=await sb.from('friendships').insert({requester_id:user.id,addressee_id:id,status:'pending'});if(error)return toast('❌ '+error.message);await refresh();toast('Invitation envoyée.')}
+async function accept(id){const r=relations.find(x=>x.requester_id===id||x.addressee_id===id);if(!r)return;const {error}=await sb.from('friendships').update({status:'accepted'}).eq('id',r.id);if(error)return toast('❌ '+error.message);await refresh();toast('🤝 Ami ajouté.')}
+function memberCard(p){
+ const r=rel(p.id);let action=r==='friend'?`<button class="secondary" onclick="openConversation('${p.id}')">💬 Message</button><button class="secondary" onclick="startCall('${p.id}','audio')">📞 Audio</button><button class="primary" onclick="startCall('${p.id}','video')">🎥 Vidéo</button>`:r==='sent'?'<button class="ghost" disabled>✓ Envoyée</button>':r==='received'?`<button class="primary" onclick="accept('${p.id}')">✓ Accepter</button>`:`<button class="primary" onclick="connect('${p.id}')">➕ Inviter</button>`;
+ return `<div class="card"><div class="member-row" style="margin-bottom:10px">${avatarHTML(p)}<div><h3 style="margin:0">${esc(p.display_name||p.username)}</h3><span class="pill">🟢 ${esc(p.country||'International')}</span></div></div><p class="muted">${esc(p.bio||'Membre FLEX')}</p><p><b>Domaine :</b> ${esc(p.domain||'Non renseigné')}</p><div class="actions">${action}</div></div>`;
+}
+function renderMembers(){
+ const q=(memberSearch?.value||'').toLowerCase(),f=memberFilter?.value||'all';
+ let a=profiles.filter(p=>p.id!==user?.id).filter(p=>{const txt=`${p.display_name||''} ${p.username||''} ${p.country||''} ${p.domain||''}`.toLowerCase();if(q&&!txt.includes(q))return false;if(f==='friends'&&!isFriend(p.id))return false;if(f==='pending'&&!['sent','received'].includes(rel(p.id)))return false;return true});
+ members.innerHTML=a.length?a.map(memberCard).join(''):'<div class="empty">Aucun membre correspondant.</div>';
+}
+async function getConversation(other){
+ const {data:mine,error:e1}=await sb.from('conversation_members').select('conversation_id').eq('user_id',user.id);if(e1)throw e1;
+ const ids=(mine||[]).map(x=>x.conversation_id);
+ if(ids.length){const {data:their,error:e2}=await sb.from('conversation_members').select('conversation_id').eq('user_id',other).in('conversation_id',ids);if(e2)throw e2;if(their?.length)return their[0].conversation_id}
+ const {data:c,error:e3}=await sb.from('conversations').insert({}).select('id').single();if(e3)throw e3;
+ const {error:e4}=await sb.from('conversation_members').insert([{conversation_id:c.id,user_id:user.id},{conversation_id:c.id,user_id:other}]);if(e4)throw e4;return c.id;
+}
+async function openConversation(other){
+ if(!user)return openAuth();if(!isFriend(other))return toast('🔒 Ajoute cette personne comme ami pour discuter.');
+ const p=profiles.find(x=>x.id===other);if(!p)return;
+ try{activeConversation=await getConversation(other);chatHead.innerHTML=`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:180px"><b>💬 ${esc(p.display_name||p.username)}</b><div class="small muted"><span id="chatPresence" class="presence-dot"></span><span id="chatPresenceText">Hors ligne</span> · ${esc(p.country||'')} · ${esc(p.domain||'')}</div></div><button class="secondary" onclick="startCall('${p.id}','audio')">📞</button><button class="primary" onclick="startCall('${p.id}','video')">🎥</button></div>`;
+ const {data,error}=await sb.from('messages').select('*').eq('conversation_id',activeConversation).order('created_at',{ascending:true});if(error)throw error;
+ messages.innerHTML=(data||[]).map(m=>bubble(m,p)).join('')||'<div class="empty">Aucun message. Commence la conversation.</div>';messages.scrollTop=messages.scrollHeight;
+ if(realtime)await sb.removeChannel(realtime);
+ realtime=sb.channel('flex-chat-'+activeConversation).on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'conversation_id=eq.'+activeConversation},payload=>{if(payload.new.sender_id!==user.id){messages.insertAdjacentHTML('beforeend',bubble(payload.new,p));messages.scrollTop=messages.scrollHeight;sb.from('message_receipts').upsert({message_id:payload.new.id,user_id:user.id,read_at:new Date().toISOString()},{onConflict:'message_id,user_id'});}}).subscribe();
+ showPage('chats');updateChatPresence();
+ }catch(e){toast('❌ '+(e.message||'Impossible d’ouvrir la conversation.'))}
+}
+function bubble(m,p){
+ const mine=m.sender_id===user.id;
+ let content=m.deleted_at?'<i class="muted">Message supprimé</i>':(m.message_type==='audio'&&m.media_url?`<audio controls src="${esc(m.media_url)}" style="max-width:100%"></audio>`:(m.media_url&&m.message_type.startsWith('image')?`<img src="${esc(m.media_url)}" style="max-width:220px;border-radius:12px;display:block">`:m.media_url&&m.message_type.startsWith('video')?`<video controls src="${esc(m.media_url)}" style="max-width:240px;border-radius:12px"></video>`:m.media_url?`<a href="${esc(m.media_url)}" target="_blank" rel="noopener">📎 Ouvrir le fichier</a>`:esc(m.body||'')));
+ const reply=m.reply_to_id?`<div class="small muted" style="border-left:3px solid var(--accent);padding-left:7px;margin-bottom:5px">↩️ Réponse</div>`:'';
+ return `<div class="bubble ${mine?'mine':'theirs'}" id="msg-${m.id}"><b>${mine?'Moi':esc(p?.display_name||p?.username||'Membre')}</b>${reply}<br>${content}<div class="small muted">${new Date(m.created_at).toLocaleTimeString()} ${m.edited_at?'· modifié':''}</div><div><button style="background:transparent;border:0;color:inherit" onclick="reactMessage('${m.id}','❤️')">❤️</button><button style="background:transparent;border:0;color:inherit" onclick="reactMessage('${m.id}','👍')">👍</button><button style="background:transparent;border:0;color:inherit" onclick="reactMessage('${m.id}','😂')">😂</button><button style="background:transparent;border:0;color:inherit" onclick="setReply('${m.id}')">↩️</button>${mine&&!m.deleted_at?`<button style="background:transparent;border:0;color:inherit" onclick="editMessage('${m.id}',${JSON.stringify(m.body||'')})">✏️</button><button style="background:transparent;border:0;color:inherit" onclick="deleteMessage('${m.id}')">🗑️</button>`:''}</div><div class="small" id="react-${m.id}"></div></div>`;
+}
+function sendTyping(){
+ if(!user||!activeConversation||!userChannel)return;
+ const other=otherFromConversation();
+ if(!other)return;
+ userChannel.send({type:'broadcast',event:'typing',payload:{to:other,from:user.id}});
+ clearTimeout(typingTimer);
+ typingTimer=setTimeout(()=>{},1200);
+}
+async function sendMessage(){
+ const text=messageInput.value.trim();if(!text||!activeConversation||!user)return;
+ const payload={conversation_id:activeConversation,sender_id:user.id,body:text,message_type:'text',reply_to_id:window.flexReplyId||null};
+ const {data,error}=await sb.from('messages').insert(payload).select().single();if(error)return toast('❌ '+error.message);
+ messageInput.value='';cancelReply();renderOpenMessages();renderConversations();
+}
+async function renderOpenMessages(){
+ if(!activeConversation)return;
+ const {data,error}=await sb.from('messages').select('*').eq('conversation_id',activeConversation).order('created_at',{ascending:true});
+ if(error)return toast('❌ '+error.message);
+ const p=profiles.find(x=>x.id===otherFromConversation())||{};
+ messages.innerHTML=(data||[]).map(m=>bubble(m,p)).join('')||'<div class="empty">Aucun message. Commence la conversation.</div>';
+ messages.scrollTop=messages.scrollHeight;
+ if(user){for(const m of (data||[]).filter(x=>x.sender_id!==user.id)) await sb.from('message_receipts').upsert({message_id:m.id,user_id:user.id,read_at:new Date().toISOString()},{onConflict:'message_id,user_id'});}
+}
+function toggleEmoji(){const e=document.getElementById('emojiBar');e.style.display=e.style.display==='none'?'block':'none';e.onclick=ev=>{if(ev.target.textContent.trim()){messageInput.value+=ev.target.textContent.trim();messageInput.focus()}}}
+function setReply(id){window.flexReplyId=id;const m=document.getElementById('msg-'+id);const bar=document.getElementById('replyBar');bar.style.display='block';bar.innerHTML=`↩️ Réponse au message <button class="ghost" onclick="cancelReply()">Annuler</button>`;messageInput.focus()}
+function cancelReply(){window.flexReplyId=null;const bar=document.getElementById('replyBar');if(bar)bar.style.display='none'}
+async function editMessage(id,old){const text=prompt('Modifier le message :',old);if(text===null||!text.trim())return;const {error}=await sb.from('messages').update({body:text.trim(),edited_at:new Date().toISOString()}).eq('id',id).eq('sender_id',user.id);if(error)return toast('❌ '+error.message);renderOpenMessages()}
+async function deleteMessage(id){if(!confirm('Supprimer ce message ?'))return;const {error}=await sb.from('messages').update({body:'',deleted_at:new Date().toISOString()}).eq('id',id).eq('sender_id',user.id);if(error)return toast('❌ '+error.message);renderOpenMessages()}
+async function sendAttachment(input){
+ const f=input.files?.[0];if(!f||!activeConversation||!user)return;
+ if(f.size>10*1024*1024)return toast('❌ Fichier limité à 10 Mo.');
+ const ext=(f.name.split('.').pop()||'bin').toLowerCase(),path=`${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+ const {error:up}=await sb.storage.from('flex-media').upload(path,f,{contentType:f.type||'application/octet-stream',upsert:false});
+ if(up)return toast('❌ Upload: '+up.message);
+ const {data:url}=sb.storage.from('flex-media').getPublicUrl(path);
+ const type=f.type.startsWith('image/')?'image':f.type.startsWith('video/')?'video':f.type.startsWith('audio/')?'audio':'file';
+ const {error}=await sb.from('messages').insert({conversation_id:activeConversation,sender_id:user.id,body:f.name,message_type:type,media_url:url.publicUrl});
+ if(error)return toast('❌ '+error.message);
+ input.value='';renderOpenMessages();renderConversations();
+}
+function otherFromConversation(){
+ const c=conversations.find(x=>x.id===activeConversation);return c?.otherId;
+}
+async function renderConversations(){
+ if(!user){conversationList.innerHTML='<div class="empty">Connecte-toi pour voir tes messages.<br><button class="primary" style="margin-top:10px" onclick="openAuth()">Se connecter</button></div>';return}
+ const {data:cm}=await sb.from('conversation_members').select('conversation_id').eq('user_id',user.id);const ids=(cm||[]).map(x=>x.conversation_id);
+ if(!ids.length){conversationList.innerHTML='<div class="empty">Aucune conversation.</div>';statChats.textContent='0';return}
+ const {data:members}=await sb.from('conversation_members').select('conversation_id,user_id').in('conversation_id',ids);
+ const others=(members||[]).filter(x=>x.user_id!==user.id);
+ conversations=others.map(x=>({id:x.conversation_id,otherId:x.user_id}));
+ const q=(chatSearch?.value||'').toLowerCase();
+ const arr=conversations.filter(c=>{const p=profiles.find(x=>x.id===c.otherId);return (`${p?.display_name||''} ${p?.username||''}`).toLowerCase().includes(q)});
+ conversationList.innerHTML=arr.length?arr.map(c=>{const p=profiles.find(x=>x.id===c.otherId)||{};return `<div class="conversation ${c.id===activeConversation?'active':''}" onclick="openConversation('${c.otherId}')">${avatarHTML(p)}<div class="grow"><b>${esc(p.display_name||p.username||'Membre')}</b><div class="small muted">${esc(p.country||'')}</div></div></div>`}).join(''):'<div class="empty">Aucune conversation.</div>';
+ statChats.textContent=String(conversations.length);
+}
+function renderProfile(){
+ if(!user){profileBox.innerHTML='<div class="card"><p class="muted">Connecte-toi pour gérer ton profil.</p><button class="primary" onclick="openAuth()">Se connecter</button></div>';return}
+ const p=profiles.find(x=>x.id===user.id)||{};
+ profileBox.innerHTML=`<div class="card"><div class="avatar-actions"><div class="profile-avatar" id="profileAvatarPreview">${p.avatar_url?`<img src="${esc(p.avatar_url)}" alt="Photo de profil">`:esc((p.display_name||p.username||"?").slice(0,1).toUpperCase())}</div><div><label class="ghost" style="display:inline-block;padding:10px 14px;border-radius:11px;cursor:pointer">📷 Choisir une photo<input id="avatarFile" type="file" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="previewAvatar(this)"></label><div class="small muted" style="margin-top:6px">JPG, PNG ou WebP · 5 Mo max</div><button type="button" class="dangerBtn" style="margin-top:8px" onclick="removeAvatar()">Supprimer la photo</button></div></div><div class="field"><label>Nom affiché</label><input id="pfName" value="${esc(p.display_name||'')}"></div><div class="grid g2"><div class="field"><label>Pays</label><input id="pfCountry" value="${esc(p.country||'')}"></div><div class="field"><label>Domaine</label><input id="pfDomain" value="${esc(p.domain||'')}"></div></div><div class="field"><label>Bio</label><textarea id="pfBio">${esc(p.bio||'')}</textarea></div><button class="primary" onclick="saveProfile()">💾 Enregistrer</button></div>`;
+}
+async function uploadAvatar(file){
+ if(!user||!file)return null;
+ if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('Format non autorisé. Utilise JPG, PNG ou WebP.');
+ if(file.size>5*1024*1024)throw new Error('Photo trop volumineuse. Maximum 5 Mo.');
+ const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+ const path=`${user.id}/avatar-${Date.now()}.${ext}`;
+ const old=profiles.find(x=>x.id===user.id)?.avatar_url||'';
+ const {error}=await sb.storage.from('avatars').upload(path,file,{upsert:false,contentType:file.type,cacheControl:'3600'});if(error)throw error;
+ const {data}=sb.storage.from('avatars').getPublicUrl(path);
+ const {error:e2}=await sb.from('profiles').update({avatar_url:data.publicUrl}).eq('id',user.id);if(e2){await sb.storage.from('avatars').remove([path]);throw e2;}
+ const oldPath=avatarPath(old);if(oldPath)await sb.storage.from('avatars').remove([oldPath]);
+ return data.publicUrl;
+}
+function avatarPath(url){try{const marker='/storage/v1/object/public/avatars/';const i=(url||'').indexOf(marker);return i>=0?decodeURIComponent(url.slice(i+marker.length).split('?')[0]):null}catch(e){return null}}
+function previewAvatar(input){const file=input.files?.[0];if(!file)return;if(file.size>5*1024*1024)return toast('❌ Maximum 5 Mo.');const box=document.getElementById('profileAvatarPreview');if(box){const r=new FileReader();r.onload=()=>box.innerHTML=`<img src="${r.result}" alt="Aperçu">`;r.readAsDataURL(file)}}
+async function removeAvatar(){
+ if(!user)return;const p=profiles.find(x=>x.id===user.id)||{};if(!p.avatar_url)return toast('Aucune photo à supprimer.');
+ const path=avatarPath(p.avatar_url);if(path)await sb.storage.from('avatars').remove([path]);
+ const {error}=await sb.from('profiles').update({avatar_url:null}).eq('id',user.id);if(error)return toast('❌ '+error.message);await refresh();toast('Photo supprimée.');renderProfile();
+}
+async function saveProfile(){
+ try{
+  const file=document.getElementById('avatarFile')?.files?.[0];let avatar_url=profiles.find(x=>x.id===user.id)?.avatar_url||null;
+  if(file){toast('⏳ Upload de la photo…');avatar_url=await uploadAvatar(file)}
+  const {error}=await sb.from('profiles').update({display_name:pfName.value.trim()||'Membre FLEX',country:pfCountry.value.trim()||'International',domain:pfDomain.value.trim()||'À définir',bio:pfBio.value.trim(),avatar_url}).eq('id',user.id);if(error)throw error;
+  await refresh();toast('✅ Profil mis à jour.');renderProfile();
+ }catch(e){toast('❌ '+(e.message||'Impossible de mettre à jour le profil.'))}
+}
+async function renderNotifications(){
+ const received=relations.filter(x=>x.status==='pending'&&x.addressee_id===user?.id);let persistent=[];
+ if(user){try{const {data}=await sb.from('notifications').select('*').eq('user_id',user.id).order('created_at',{ascending:false}).limit(30);persistent=data||[]}catch(e){}}
+ const count=received.length+persistent.filter(n=>!n.read_at).length;const badge=document.getElementById('notificationNavBadge');if(badge){badge.textContent=count;badge.style.display=count?'inline-grid':'none'}const top=document.getElementById('notificationCount');if(top){top.textContent=count;top.style.display=count?'inline-grid':'none'}if(!notificationsList)return;
+ const inv=received.map(r=>{const p=profiles.find(x=>x.id===r.requester_id)||{};return `<div class="notifyCard"><div class="notifyIcon">🤝</div>${avatarHTML(p)}<div class="notifyText"><b>${esc(p.display_name||p.username||'Membre FLEX')}</b><div class="small muted">t'a envoyé une invitation pour rejoindre ton réseau FLEX.</div></div><div class="notifyActions"><button class="primary" onclick="accept('${r.requester_id}')">✓ Accepter</button></div></div>`}).join('');
+ const pers=persistent.map(n=>`<div class="notifyCard"><div class="notifyIcon">🔔</div><div class="notifyText"><b>${esc(n.title||'Notification FLEX')}</b><div class="small muted">${esc(n.body||'')}</div><div class="notifyTime">${new Date(n.created_at).toLocaleString()}</div></div></div>`).join('');
+ notificationsList.innerHTML=(inv+pers)||'<div class="notifyEmpty"><div class="notifyEmptyIcon">🔕</div><h3 style="margin:0 0 6px">Aucune nouvelle notification</h3><p class="muted">Tu es à jour.</p></div>';
+ if(persistent.some(n=>!n.read_at)){try{await sb.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',user.id).is('read_at',null)}catch(e){}}
+}
+function renderHome(){
+ if(!user){homeAuth.innerHTML='<h3>🔒 Bienvenue sur FLEX</h3><p class="muted">Connecte-toi pour accéder aux membres, messages et appels.</p><button class="primary" onclick="openAuth()">👤 Créer un compte / Se connecter</button>';topStatus.textContent='Non connecté';topAvatar.textContent='?';return}
+ const p=profiles.find(x=>x.id===user.id)||{};topStatus.textContent=`🟢 ${p.display_name||user.email}`;topAvatar.innerHTML=p.avatar_url?`<img src="${esc(p.avatar_url)}" alt="">`:esc((p.display_name||'M').slice(0,1).toUpperCase());
+ homeAuth.innerHTML=`<h3>👋 Salut ${esc(p.display_name||'membre')} !</h3><p class="muted">${esc(p.country||'International')} · ${esc(p.domain||'À définir')}</p><div class="actions"><button class="primary" onclick="showPage('friends')">👥 Trouver des membres</button><button class="secondary" onclick="showPage('profile')">👤 Mon profil</button></div>`;
+ statFriends.textContent=String(relations.filter(x=>x.status==='accepted').length);
+}
+function avatarHTML(p){
+ const n=(p?.display_name||p?.username||'?').trim();
+ return `<div class="avatar">${p?.avatar_url?`<img src="${esc(p.avatar_url)}" alt="">`:esc((n[0]||'?').toUpperCase())}</div>`;
+}
+function getProfile(id){return profiles.find(p=>p.id===id)||profileCache[id]||null}
+function countUnread(id){return Number(unreadCounts[id]||0)}
+function setUnread(id,n){unreadCounts[id]=Math.max(0,Number(n)||0);localStorage.setItem('flexUnread',JSON.stringify(unreadCounts))}
+function loadUnread(){try{unreadCounts=JSON.parse(localStorage.getItem('flexUnread')||'{}')||{}}catch(e){unreadCounts={}}}
+function filterFlexConversations(q){
+ const box=document.getElementById('conversationList')||document.getElementById('conversations'); if(!box)return;
+ q=(q||'').toLowerCase().trim();
+ const list=conversations.filter(c=>{const p=getProfile(c.other_id);return !q||`${p?.display_name||''} ${p?.username||''} ${p?.country||''} ${c.preview||''}`.toLowerCase().includes(q)});
+ box.innerHTML=list.map(c=>{const p=getProfile(c.other_id),u=countUnread(c.id);return `<button class="card" style="width:100%;text-align:left;display:flex;gap:10px;align-items:center;margin-bottom:8px" onclick="flexOpenChat('${c.id}')">${avatarHTML(p)}<span class="conv-meta"><span class="conv-name"><b>${esc(p?.display_name||p?.username||'Membre FLEX')}</b>${u?`<span class="unread-badge">${u>99?'99+':u}</span>`:''}</span><span class="preview">${esc(c.preview||'Démarrer la conversation')}</span></span></button>`}).join('')||'<div class="muted">Aucun résultat.</div>';
+}
+
+async function refresh(){
+ const {data:u}=await sb.auth.getUser();user=u?.user||null;
+ if(!user){profiles=[];relations=[];renderHome();renderConversations();return}
+ await ensureProfile(user);
+ const [pr,fr]=await Promise.all([sb.from('profiles').select('*').order('created_at',{ascending:false}),sb.from('friendships').select('*').or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)]);
+ profiles=pr.data||[];relations=fr.data||[];renderHome();renderMembers();renderConversations();renderNotifications();renderProfile();renderCallFriends();startSignal();startPresence();
+}
+
+function renderCallFriends(){const box=document.getElementById('callFriends');if(!box)return;if(!user){box.innerHTML='<div class="empty">🔒 Connecte-toi pour voir tes amis.</div>';return}const fs=profiles.filter(p=>p.id!==user.id&&isFriend(p.id));box.innerHTML=fs.length?fs.map(p=>`<div class="row">${avatarHTML(p)}<div class="grow"><b>${esc(p.display_name||p.username)}</b><div class="small muted">🟢 ${esc(p.country||'')} · ${esc(p.domain||'')}</div></div><button class="secondary" title="Appel audio" onclick="startCall('${p.id}','audio')">📞 <span class="small">Audio</span></button><button class="primary" title="Appel vidéo" onclick="startCall('${p.id}','video')">🎥 <span class="small">Vidéo</span></button></div>`).join(''):'<div class="empty">Aucun ami accepté. Ajoute d’abord un membre dans Contacts.</div>'}
+function callRoom(a,b){return'flex-call-'+[a,b].sort().join('-')}
+let pendingIceCandidates=[];
+let callStartedAt=0;
+function buildPC(other){
+ const pc=new RTCPeerConnection({iceServers:[
+   {urls:'stun:stun.l.google.com:19302'},
+   {urls:'stun:stun1.l.google.com:19302'},
+   {urls:'stun:stun2.l.google.com:19302'},
+   {urls:'stun:stun.cloudflare.com:3478'}
+ ]});
+ pc.onicecandidate=e=>{if(e.candidate)sendCallSignal('call-ice',{to:other,from:user.id,candidate:e.candidate})};
+ pc.ontrack=e=>{const stream=e.streams[0];if(remoteVideo)remoteVideo.srcObject=stream;if(remoteAudio)remoteAudio.srcObject=stream;remoteVideo?.play().catch(()=>{});remoteAudio?.play().catch(()=>{})};
+ pc.onconnectionstatechange=()=>{if(pc.connectionState==='connected'){callStartedAt=Date.now();toast('🟢 Appel connecté.')}if(pc.connectionState==='failed')endCall(false)};
+ return pc;
+}
+async function flushIce(){if(!callPC||!callPC.remoteDescription)return;const q=pendingIceCandidates.splice(0);for(const c of q){try{await callPC.addIceCandidate(c)}catch(e){}}}
+async function ensureSignal(){if(!userChannel)await startSignal();}
+async function startCall(id,type){
+ if(!user)return openAuth();if(!isFriend(id))return toast('🔒 Vous devez être amis pour appeler.');
+ try{await ensureSignal();callOther=id;callType=type;pendingIceCandidates=[];callPC=buildPC(id);localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==='video'});localStream.getTracks().forEach(t=>callPC.addTrack(t,localStream));
+ const p=profiles.find(x=>x.id===id)||{};callTitle.innerHTML=`<h2>${type==='video'?'🎥':'📞'} Appel avec ${esc(p.display_name||'Membre')}</h2><p class="muted">Connexion en cours…</p>`;callVideos.style.display=type==='video'?'grid':'none';audioOnly.style.display=type==='video'?'none':'grid';localVideo.srcObject=localStream;callOverlay.classList.add('show');
+ const offer=await callPC.createOffer();await callPC.setLocalDescription(offer);await sendCallSignal('call-offer',{to:id,from:user.id,offer,type});
+ }catch(e){endCall(false);toast('🎙️ Autorise le micro'+(type==='video'?' et la caméra':'')+' pour appeler. '+(e?.message||''))}
+}
+async function acceptCall(){
+ const p=pendingOffer;if(!p)return;pendingOffer=null;callOther=p.from;callType=p.type||'audio';pendingIceCandidates=[];
+ try{callPC=buildPC(p.from);localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:callType==='video'});localStream.getTracks().forEach(t=>callPC.addTrack(t,localStream));callTitle.innerHTML=`<h2>${callType==='video'?'🎥':'📞'} Appel FLEX</h2><p class="muted">Avec ${esc((profiles.find(x=>x.id===p.from)||{}).display_name||'Membre')} · connexion…</p>`;callVideos.style.display=callType==='video'?'grid':'none';audioOnly.style.display=callType==='video'?'none':'grid';localVideo.srcObject=localStream;callOverlay.classList.add('show');await callPC.setRemoteDescription(p.offer);await flushIce();const answer=await callPC.createAnswer();await callPC.setLocalDescription(answer);await sendCallSignal('call-answer',{to:p.from,from:user.id,answer})}catch(e){endCall(false);toast('❌ Impossible d’accepter l’appel. '+(e?.message||''))}
+}
+function toggleCallMute(){const t=localStream?.getAudioTracks?.()[0];if(!t)return;t.enabled=!t.enabled;toast(t.enabled?'🎙️ Micro activé':'🔇 Micro coupé')}
+function toggleCallCamera(){const t=localStream?.getVideoTracks?.()[0];if(!t)return;t.enabled=!t.enabled;toast(t.enabled?'📷 Caméra activée':'🚫 Caméra coupée')}
+function rejectCall(){pendingOffer=null;closeCallUI()}
+function closeCallUI(){callOverlay.classList.remove('show')}
+async function endCall(notify=true){try{if(notify&&callOther)await sendCallSignal('call-hangup',{to:callOther,from:user?.id})}catch(e){}if(localStream)localStream.getTracks().forEach(t=>t.stop());try{callPC?.close()}catch(e){}if(remoteVideo)remoteVideo.srcObject=null;if(remoteAudio)remoteAudio.srcObject=null;callPC=null;localStream=null;callOther=null;pendingOffer=null;pendingIceCandidates=[];closeCallUI()}
+
+async function startPresence(){
+ if(!user)return;
+ try{if(presenceChannel)await sb.removeChannel(presenceChannel)}catch(e){}
+ presenceChannel=sb.channel('flex-presence',{
+   config:{presence:{key:user.id}}
+ });
+ presenceChannel.on('presence',{event:'sync'},()=>{
+   const state=presenceChannel.presenceState();
+   window.flexOnlineUsers=new Set(Object.keys(state||{}));
+   updateChatPresence();
+ }).on('presence',{event:'join'},updateChatPresence)
+   .on('presence',{event:'leave'},updateChatPresence)
+   .subscribe(async status=>{
+     if(status==='SUBSCRIBED'){
+       await presenceChannel.track({online_at:new Date().toISOString(),display_name:(profiles.find(p=>p.id===user.id)||{}).display_name||user.email});
+     }
+   });
+}
+function updateChatPresence(){
+ const other=otherFromConversation();
+ const online=!!(other&&window.flexOnlineUsers&&window.flexOnlineUsers.has(other));
+ const dot=document.getElementById('chatPresence'),txt=document.getElementById('chatPresenceText');
+ if(dot)dot.classList.toggle('online',online);
+ if(txt)txt.textContent=online?'En ligne':'Hors ligne';
+}
+
+async function startSignal(){
+ if(!user)return;
+ try{if(userChannel)await sb.removeChannel(userChannel)}catch(e){}
+ userChannel=sb.channel('flex-calls');
+ userChannel
+ .on('broadcast',{event:'call-offer'},({payload})=>{
+   if(payload?.to!==user.id)return;
+   const p=profiles.find(x=>x.id===payload.from);pendingOffer=payload;callOther=payload.from;callType=payload.type||'audio';
+   callTitle.innerHTML=`<h2>${callType==='video'?'🎥':'📞'} Appel entrant</h2><p>${esc(p?.display_name||'Membre FLEX')} t'appelle.</p><div class="actions" style="justify-content:center"><button class="primary" onclick="acceptCall()">Accepter</button><button class="dangerBtn" onclick="rejectCall()">Refuser</button></div>`;
+   callVideos.style.display='none';audioOnly.style.display='grid';callOverlay.classList.add('show');
+ })
+ .on('broadcast',{event:'call-answer'},async({payload})=>{if(payload?.to===user.id&&callPC)try{await callPC.setRemoteDescription(payload.answer);await flushIce()}catch(e){}})
+ .on('broadcast',{event:'call-ice'},async({payload})=>{if(payload?.to!==user.id||!payload.candidate)return;if(callPC?.remoteDescription)try{await callPC.addIceCandidate(payload.candidate)}catch(e){}else pendingIceCandidates.push(payload.candidate)})
+ .on('broadcast',{event:'typing'},({payload})=>{if(payload?.to!==user.id||payload?.from!==otherFromConversation())return;const p=profiles.find(x=>x.id===payload.from);const ti=document.getElementById('typingIndicator');if(ti){ti.textContent=`${p?.display_name||'Membre'} écrit…`;clearTimeout(window._typingHide);window._typingHide=setTimeout(()=>ti.textContent='',1600)}})
+ .on('broadcast',{event:'call-hangup'},({payload})=>{if(payload?.to===user.id)endCall(false)})
+ .subscribe();
+}
+function sendCallSignal(event,payload){return userChannel?.send({type:'broadcast',event,payload})}
+
+function previewStatusMedia(input){
+ const file=input?.files?.[0], preview=document.getElementById('statusPreview'), name=document.getElementById('statusMediaName');
+ if(!file){clearStatusMedia();return}
+ if(file.size>10*1024*1024){toast('❌ Média trop lourd : maximum 10 Mo.');input.value='';return}
+ if(name)name.textContent='📎 '+file.name;
+ if(!preview)return;
+ const url=URL.createObjectURL(file); preview.style.display='block';
+ preview.innerHTML=file.type.startsWith('video/')?`<video src="${url}" controls playsinline></video>`:`<img src="${url}" alt="Aperçu">`;
+}
+function clearStatusMedia(){const input=document.getElementById('statusMedia'),preview=document.getElementById('statusPreview'),name=document.getElementById('statusMediaName');if(input)input.value='';if(preview){preview.innerHTML='';preview.style.display='none'}if(name)name.textContent='Aucun média sélectionné'}
+async function createStatus(){
+ if(!requireUser())return;
+ const el=document.getElementById('statusBody'), input=document.getElementById('statusMedia');
+ const body=(el?.value||'').trim(), file=input?.files?.[0];
+ if(!body&&!file)return toast('Ajoute un texte, une photo ou une vidéo.');
+ if(file&&file.size>10*1024*1024)return toast('❌ Média trop lourd : maximum 10 Mo.');
+ try{
+   let mediaMarker='';
+   if(file){
+     toast('⏳ Envoi du média…');
+     const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');
+     const path=`${user.id}/status-${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+     const up=await sb.storage.from('flex-media').upload(path,file,{contentType:file.type,upsert:false});
+     if(up.error)throw up.error;
+     const {data:u}=sb.storage.from('flex-media').getPublicUrl(path);
+     mediaMarker=`[FLEXMEDIA type="${file.type}" url="${u.publicUrl}"]`;
+   }
+   const content=`🟢 STATUT · ${mediaMarker}${body}`;
+   const {error}=await sb.from('posts').insert({author_id:user.id,body:content});
+   if(error)throw error;
+   if(el)el.value='';clearStatusMedia();toast('✅ Statut publié.');await loadStatuses();
+ }catch(e){toast('❌ '+(e.message||'Impossible de publier le statut.'))}
+}
+function parseStatusBody(raw){
+ const clean=String(raw||'').replace(/^🟢 STATUT · /,'');
+ const m=clean.match(/^\[FLEXMEDIA type="([^"]+)" url="([^"]+)"\](.*)$/s);
+ return m?{type:m[1],url:m[2],caption:m[3].trim()}: {type:'',url:'',caption:clean};
+}
+async function loadStatuses(){
+ const box=document.getElementById('statusList'),stories=document.getElementById('statusStories');if(!box)return;
+ if(!user){
+   if(stories)stories.innerHTML='<div class="statusStoryEmpty">🔒 Connecte-toi pour voir les statuts.</div>';
+   box.innerHTML='<div class="empty">Connecte-toi pour voir les statuts.</div>';return;
+ }
+ const since=new Date(Date.now()-24*60*60*1000).toISOString();
+ const {data,error}=await sb.from('posts').select('*').gte('created_at',since).like('body','🟢 STATUT · %').order('created_at',{ascending:false}).limit(100);
+ if(error){if(stories)stories.innerHTML='<div class="statusStoryEmpty">❌ Impossible de charger les statuts.</div>';box.innerHTML='<div class="empty">❌ '+esc(error.message)+'</div>';return}
+ const rows=data||[],ids=[...new Set(rows.map(x=>x.author_id))];
+ const {data:ps}=ids.length?await sb.from('profiles').select('*').in('id',ids):{data:[]};(ps||[]).forEach(x=>profileCache[x.id]=x);
+ const mine=rows.find(x=>x.author_id===user.id);
+ const grouped=[];const seen=new Set();
+ rows.forEach(x=>{if(!seen.has(x.author_id)){seen.add(x.author_id);grouped.push(x)}});
+ if(stories){
+   const addStory=`<div class="statusStory statusStoryAdd" onclick="document.getElementById('statusBody')?.focus();document.getElementById('statusBody')?.scrollIntoView({behavior:'smooth',block:'center'})"><div class="statusStoryCircle"><div class="statusStoryInner">＋</div></div><div class="statusStoryText">Mon statut</div></div>`;
+   const cards=grouped.map(x=>{
+     const a=getProfile(x.author_id)||{},st=parseStatusBody(x.body),name=a.display_name||a.username||'Membre';
+     let inner=st.url?(st.type.startsWith('video/')?`<video src="${esc(st.url)}" muted playsinline preload="metadata"></video>`:`<img src="${esc(st.url)}" alt="">`):`<span>${esc((st.caption||'Statut').slice(0,26))}</span>`;
+     return `<div class="statusStory ${x.author_id===user.id?'statusStoryMe':''}" onclick="openStatusStory('${x.id}')"><div class="statusStoryCircle"><div class="statusStoryInner">${inner}</div></div><div class="statusStoryText">${esc(x.author_id===user.id?'Moi':name)}</div></div>`;
+   }).join('');
+   stories.innerHTML=addStory+(cards||'<div class="statusStoryEmpty">Aucun statut publié pour le moment.</div>');
+ }
+ window.flexStatusRows=rows;
+ box.innerHTML=rows.map(x=>{const a=getProfile(x.author_id)||{},st=parseStatusBody(x.body),media=st.url?(st.type.startsWith('video/')?`<div class="statusCardMedia"><video src="${esc(st.url)}" controls playsinline preload="metadata"></video></div>`:`<div class="statusCardMedia"><img src="${esc(st.url)}" alt="Statut de ${esc(a.display_name||'membre')}"></div>`):'';return `<div class="card post statusCard"><div class="postHead">${avatarHTML(a)}<div><b>${esc(a.display_name||a.username||'Membre')}</b><div class="small muted">${new Date(x.created_at).toLocaleString()}</div></div></div>${media}${st.caption?`<div class="statusCaption">${esc(st.caption)}</div>`:''}<div class="postActions" style="margin-top:10px"><button onclick="openStatusStory('${x.id}')">👁️ Ouvrir</button></div></div>`}).join('')||'<div class="empty">Aucun statut dans les dernières 24 heures.</div>';
+}
+function openStatusStory(id){
+ const row=(window.flexStatusRows||[]).find(x=>x.id===id);if(!row)return;
+ const a=getProfile(row.author_id)||{},st=parseStatusBody(row.body),name=a.display_name||a.username||'Membre';
+ let media=st.url?(st.type.startsWith('video/')?`<div class="statusViewerMedia"><video src="${esc(st.url)}" controls autoplay playsinline></video></div>`:`<div class="statusViewerMedia"><img src="${esc(st.url)}" alt="Statut de ${esc(name)}"></div>`):'';
+ const wrap=document.getElementById('statusViewer');if(!wrap)return;
+ document.getElementById('statusViewerContent').innerHTML=`<div class="statusViewerCard"><div class="statusViewerHead"><div>${avatarHTML(a)}<div style="display:inline-block;vertical-align:middle;margin-left:9px"><b>${esc(name)}</b><div class="small muted">${new Date(row.created_at).toLocaleString()}</div></div></div><button class="ghost" onclick="closeStatusStory()">✕</button></div>${media}${st.caption?`<div class="statusViewerCaption">${esc(st.caption)}</div>`:'<div class="statusViewerCaption muted">Statut visuel</div>'}</div>`;
+ wrap.classList.add('show');
+}
+function closeStatusStory(){document.getElementById('statusViewer')?.classList.remove('show')}
+
+async function shareFlex(){const text='Rejoins-moi sur FLEX 🌐 — le réseau de Project Next : '+location.href;try{if(navigator.share)await navigator.share({title:'Rejoins-moi sur FLEX',text,url:location.href});else await navigator.clipboard.writeText(text);toast('Invitation prête à être partagée.')}catch(e){}}
+
+function getFlexCallHistory(){try{return JSON.parse(localStorage.getItem('flex_call_history')||'[]')}catch(e){return []}}
+function saveFlexCallHistory(entry){try{const a=getFlexCallHistory();a.unshift(entry);localStorage.setItem('flex_call_history',JSON.stringify(a.slice(0,50)));renderFlexCallHistory()}catch(e){}}
+function renderFlexCallHistory(){const box=document.getElementById('flexCallHistory');if(!box)return;const a=getFlexCallHistory();box.innerHTML=a.length?a.map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)">${x.direction==='out'?'📤':'📥'} <b>${esc(x.name||'Membre')}</b> · ${x.type==='video'?'🎥 Vidéo':'📞 Audio'} · ${new Date(x.at).toLocaleString()} · ${esc(x.result||'')}</div>`).join(''):'<span class="muted">Aucun appel enregistré sur cet appareil.</span>'}
+function clearFlexCallHistory(){localStorage.removeItem('flex_call_history');renderFlexCallHistory();toast('Historique effacé.')}
+const _flexStartCall=startCall;startCall=async function(id,type){const p=profiles.find(x=>x.id===id)||{};saveFlexCallHistory({direction:'out',name:p.display_name||p.username||'Membre',type,at:new Date().toISOString(),result:'Appel lancé'});return _flexStartCall(id,type)};
+const _flexAcceptCall=acceptCall;acceptCall=async function(){const from=pendingOffer?.from;const p=profiles.find(x=>x.id===from)||{};saveFlexCallHistory({direction:'in',name:p.display_name||p.username||'Membre',type:pendingOffer?.type||'audio',at:new Date().toISOString(),result:'Appel accepté'});return _flexAcceptCall()};
+renderFlexCallHistory();
+messageInput?.addEventListener('input',sendTyping);
+sb.auth.onAuthStateChange((_event,session)=>{user=session?.user||null;setTimeout(refresh,0)});
+window.addEventListener('beforeunload',()=>{try{presenceChannel?.untrack()}catch(e){}});
+(async()=>{await refresh()})();
+</script>
+
+<script>
+let feedPosts=[],feedComments={},feedReactions={},groupsData=[],activeGroup=null,groupChannel=null,recording=null,recordChunks=[];
+function requireUser(){if(!user){openAuth();return false}return true}
+function openPostComposer(){if(!requireUser())return;document.getElementById('postComposer').style.display='block';document.getElementById('postBody').focus()}
+function closePostComposer(){document.getElementById('postComposer').style.display='none'}
+async function createPost(){if(!requireUser())return;const body=document.getElementById('postBody').value.trim();if(!body)return toast('Écris quelque chose.');const {error}=await sb.from('posts').insert({author_id:user.id,body});if(error)return toast('❌ '+error.message);document.getElementById('postBody').value='';closePostComposer();await renderFeed();toast('Publication créée.');}
+async function renderFeed(){const box=document.getElementById('feedList');if(!box)return;if(!user){box.innerHTML='<div class="empty">Connecte-toi pour voir le fil FLEX.</div>';return}const {data,error}=await sb.from('posts').select('*').order('created_at',{ascending:false}).limit(50);if(error){box.innerHTML='<div class="empty">❌ '+esc(error.message)+'</div>';return}feedPosts=data||[];const q=(document.getElementById('feedSearch')?.value||'').toLowerCase();const shown=feedPosts.filter(p=>!q||p.body.toLowerCase().includes(q));if(!shown.length){box.innerHTML='<div class="empty">Aucune publication pour le moment.</div>';return}const ids=shown.map(p=>p.id);const {data:rs}=await sb.from('post_reactions').select('post_id,user_id,reaction').in('post_id',ids);feedReactions={};(rs||[]).forEach(r=>(feedReactions[r.post_id]??=[]).push(r));const {data:cs}=await sb.from('post_comments').select('id,post_id,author_id,body,created_at').in('post_id',ids).order('created_at',{ascending:true});feedComments={};(cs||[]).forEach(c=>(feedComments[c.post_id]??=[]).push(c));const authors=[...new Set(shown.map(p=>p.author_id))];const {data:ps}=await sb.from('profiles').select('*').in('id',authors);(ps||[]).forEach(p=>profileCache[p.id]=p);box.innerHTML=shown.map(p=>{const a=getProfile(p.author_id)||{};const rr=feedReactions[p.id]||[],liked=rr.some(x=>x.user_id===user.id);const cc=feedComments[p.id]||[];return `<div class="card post"><div class="postHead">${avatarHTML(a)}<div><b>${esc(a.display_name||a.username||'Membre')}</b><div class="small muted">${new Date(p.created_at).toLocaleString()}</div></div></div><div class="postBody">${esc(p.body)}</div><div class="postActions"><button onclick="togglePostLike('${p.id}')">${liked?'❤️':'♡'} ${rr.length}</button><button onclick="focusComment('${p.id}')">💬 ${cc.length}</button><button onclick="savePost('${p.id}')">🔖 Enregistrer</button>${p.author_id===user.id?`<button onclick="deletePost('${p.id}')">🗑️</button>`:''}</div><div id="comments-${p.id}">${cc.slice(-5).map(c=>{const ca=getProfile(c.author_id)||{};return `<div class="comment"><b>${esc(ca.display_name||ca.username||'Membre')}</b> ${esc(c.body)}</div>`}).join('')}</div><div class="flex-search"><input id="comment-${p.id}" placeholder="Écrire un commentaire…" onkeydown="if(event.key==='Enter')addComment('${p.id}')"><button class="secondary" onclick="addComment('${p.id}')">Commenter</button></div></div>`}).join('')}
+async function togglePostLike(id){if(!requireUser())return;const mine=(feedReactions[id]||[]).find(x=>x.user_id===user.id);if(mine)await sb.from('post_reactions').delete().eq('post_id',id).eq('user_id',user.id);else await sb.from('post_reactions').insert({post_id:id,user_id:user.id,reaction:'like'});renderFeed()}
+async function addComment(id){if(!requireUser())return;const el=document.getElementById('comment-'+id),body=el.value.trim();if(!body)return;const {error}=await sb.from('post_comments').insert({post_id:id,author_id:user.id,body});if(error)return toast('❌ '+error.message);el.value='';renderFeed()}
+function focusComment(id){document.getElementById('comment-'+id)?.focus()}
+async function savePost(id){if(!requireUser())return;const {data}=await sb.from('post_saves').select('post_id').eq('post_id',id).eq('user_id',user.id).maybeSingle();if(data)await sb.from('post_saves').delete().eq('post_id',id).eq('user_id',user.id);else await sb.from('post_saves').insert({post_id:id,user_id:user.id});toast(data?'Publication retirée des favoris.':'Publication enregistrée.')}
+async function deletePost(id){if(!requireUser())return;if(!confirm('Supprimer cette publication ?'))return;const {error}=await sb.from('posts').delete().eq('id',id).eq('author_id',user.id);if(error)return toast('❌ '+error.message);renderFeed()}
+async function renderDiscover(){const box=document.getElementById('discoverList');if(!box)return;if(!user){box.innerHTML='<div class="empty">Connecte-toi pour découvrir FLEX.</div>';return}const q=(document.getElementById('globalSearch')?.value||'').toLowerCase();const {data:ps}=await sb.from('profiles').select('*').neq('id',user.id).limit(100);const {data:gs}=await sb.from('groups').select('*').order('created_at',{ascending:false}).limit(50);const people=(ps||[]).filter(p=>!q||`${p.display_name} ${p.username} ${p.country} ${p.domain}`.toLowerCase().includes(q));const gr=(gs||[]).filter(g=>!q||`${g.name} ${g.description}`.toLowerCase().includes(q));box.innerHTML=[...people.map(p=>`<div class="card">${avatarHTML(p)}<h3>${esc(p.display_name||p.username)}</h3><p class="muted">${esc(p.country||'')} · ${esc(p.domain||'')}</p><div class="actions"><button class="primary" onclick="connect('${p.id}')">🤝 Ajouter</button><button class="secondary" onclick="openConversation('${p.id}')">💬 Message</button></div></div>`),...gr.map(g=>`<div class="card"><h3>👥 ${esc(g.name)}</h3><p class="muted">${esc(g.description)}</p><button class="primary" onclick="joinGroup('${g.id}')">Rejoindre</button></div>`)].join('')||'<div class="empty">Aucun résultat.</div>'}
+async function createGroupPrompt(){if(!requireUser())return;const name=prompt('Nom du groupe :');if(!name?.trim())return;const desc=prompt('Description :')||'';const {data,error}=await sb.from('groups').insert({name:name.trim(),description:desc,owner_id:user.id}).select().single();if(error)return toast('❌ '+error.message);await sb.from('group_members').insert({group_id:data.id,user_id:user.id,role:'owner'});renderGroups();toast('Groupe créé.');}
+async function renderGroups(){if(!user){document.getElementById('myGroups').innerHTML='<div class="empty">Connecte-toi pour utiliser les groupes.</div>';return}const {data:gm}=await sb.from('group_members').select('group_id,role').eq('user_id',user.id);const ids=(gm||[]).map(x=>x.group_id);const {data:all}=await sb.from('groups').select('*').order('created_at',{ascending:false});groupsData=all||[];const my=groupsData.filter(g=>ids.includes(g.id));document.getElementById('myGroups').innerHTML=my.map(g=>`<div class="groupRow" onclick="openGroup('${g.id}')"><span>👥</span><div><b>${esc(g.name)}</b><div class="small muted">${esc(g.description)}</div></div></div>`).join('')||'<div class="empty">Aucun groupe.</div>';document.getElementById('allGroups').innerHTML=groupsData.map(g=>`<div class="groupRow"><span>👥</span><div class="grow"><b>${esc(g.name)}</b><div class="small muted">${esc(g.description)}</div></div><button class="secondary" onclick="joinGroup('${g.id}')">Rejoindre</button></div>`).join('')||'<div class="empty">Aucun groupe.</div>'}
+async function joinGroup(id){if(!requireUser())return;const {error}=await sb.from('group_members').insert({group_id:id,user_id:user.id,role:'member'});if(error&&!String(error.message).toLowerCase().includes('duplicate'))return toast('❌ '+error.message);await renderGroups();openGroup(id);toast('Tu as rejoint le groupe.');}
+async function openGroup(id){if(!requireUser())return;activeGroup=id;const g=groupsData.find(x=>x.id===id);document.getElementById('groupChatPanel').style.display='block';document.getElementById('groupChatHead').innerHTML=`<h3>👥 ${esc(g?.name||'Groupe')}</h3><p class="muted">${esc(g?.description||'')}</p>`;await renderGroupMessages();if(groupChannel)sb.removeChannel(groupChannel);groupChannel=sb.channel('flex-group-'+id).on('postgres_changes',{event:'INSERT',schema:'public',table:'group_messages',filter:'group_id=eq.'+id},()=>renderGroupMessages()).subscribe()}
+async function renderGroupMessages(){if(!activeGroup)return;const {data,error}=await sb.from('group_messages').select('*').eq('group_id',activeGroup).order('created_at',{ascending:true});if(error)return toast('❌ '+error.message);const ids=[...new Set((data||[]).map(m=>m.sender_id))];const {data:ps}=ids.length?await sb.from('profiles').select('*').in('id',ids):{data:[]};(ps||[]).forEach(p=>profileCache[p.id]=p);document.getElementById('groupMessages').innerHTML=(data||[]).map(m=>{const p=getProfile(m.sender_id)||{};return `<div class="bubble ${m.sender_id===user.id?'mine':'theirs'}"><b>${esc(p.display_name||p.username||'Membre')}</b><br>${esc(m.body)}<div class="small muted">${new Date(m.created_at).toLocaleTimeString()}</div></div>`}).join('')||'<div class="empty">Aucun message.</div>';const b=document.getElementById('groupMessages');b.scrollTop=b.scrollHeight}
+async function sendGroupMessage(){if(!requireUser()||!activeGroup)return;const el=document.getElementById('groupMessageInput'),body=el.value.trim();if(!body)return;const {error}=await sb.from('group_messages').insert({group_id:activeGroup,sender_id:user.id,body});if(error)return toast('❌ '+error.message);el.value='';renderGroupMessages()}
+async function startVoiceMessage(){if(!requireUser())return;if(recording){recording.stop();return}if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)return toast('❌ Messages vocaux non pris en charge ici.');try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});recordChunks=[];recording=new MediaRecorder(stream);recording.ondataavailable=e=>e.data.size&&recordChunks.push(e.data);recording.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const blob=new Blob(recordChunks,{type:recording.mimeType||'audio/webm'});recording=null;const path=`${user.id}/voice-${Date.now()}.webm`;const up=await sb.storage.from('flex-media').upload(path,blob,{contentType:blob.type,upsert:false});if(up.error)return toast('❌ '+up.error.message);const {data:u}=sb.storage.from('flex-media').getPublicUrl(path);if(activeConversation){const {data,error}=await sb.from('messages').insert({conversation_id:activeConversation,sender_id:user.id,body:'🎤 Message vocal',message_type:'audio',media_url:u.publicUrl}).select().single();if(error)return toast('❌ '+error.message);toast('Message vocal envoyé.');openConversation(otherFromConversation())}};recording.start();toast('🎙️ Enregistrement… appuie à nouveau pour envoyer.')}catch(e){toast('❌ '+e.message)}}
+</script><script>
+async function reactMessage(id,reaction){if(!requireUser())return;const {data}=await sb.from('message_reactions').select('message_id').eq('message_id',id).eq('user_id',user.id).eq('reaction',reaction).maybeSingle();if(data)await sb.from('message_reactions').delete().eq('message_id',id).eq('user_id',user.id).eq('reaction',reaction);else await sb.from('message_reactions').insert({message_id:id,user_id:user.id,reaction});renderReactions(id)}
+async function renderReactions(id){const {data}=await sb.from('message_reactions').select('reaction').eq('message_id',id);const box=document.getElementById('react-'+id);if(box)box.textContent=(data||[]).map(x=>x.reaction).join(' ')}
+async function replyMessage(id){setReply(id)}
+window.addEventListener('message',function(e){var d=e.data||{};if(d.type==='pnx-request-profile'&&typeof user!=='undefined'&&user){var pp=(profiles||[]).find(function(x){return x.id===user.id})||{};parent.postMessage({type:'flex-profile-avatar',avatar_url:pp.avatar_url||'',display_name:pp.display_name||pp.username||'Mon profil'},'*')}});
+</script></body>
+</html>
